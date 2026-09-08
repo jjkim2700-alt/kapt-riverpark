@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>리버파크자이 K-apt 입찰 모니터링</title>
+    <style>
+        :root {
+            --bg: #F8FAFC;
+            --header-bg: #0F172A;
+            --primary: #2563EB;
+            --kakao: #FEE500;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
+            line-height: 1.5;
+            padding-bottom: 50px;
+        }
+        
+        /* 모바일 최적화 상단 헤더 */
+        .app-header {
+            background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%);
+            color: white;
+            padding: 20px 16px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .header-brand h1 {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .kakao-badge {
+            background-color: var(--kakao);
+            color: #181600;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 7px;
+            border-radius: 12px;
+        }
+        .header-desc {
+            font-size: 12px;
+            color: #93C5FD;
+        }
+
+        /* 카카오톡 공유 버튼 바 */
+        .share-bar {
+            max-width: 680px;
+            margin: 12px auto;
+            padding: 0 14px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn-filter {
+            flex: 1;
+            padding: 9px 4px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-filter.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 통계 그리드 */
+        .stats-grid {
+            max-width: 680px;
+            margin: 0 auto 12px;
+            padding: 0 14px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .stat-box {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .stat-box.green { border-top: 3px solid #10B981; }
+        .stat-box.blue { border-top: 3px solid #2563EB; }
+        .stat-box.red { border-top: 3px solid #EF4444; }
+        .stat-box-num { font-size: 18px; font-weight: 800; color: #0F172A; }
+        .stat-box-lbl { font-size: 10.5px; color: var(--text-muted); font-weight: 600; }
+
+        /* 피드 리스트 */
+        .feed-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 14px;
+        }
+        
+        .bid-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 14px 15px;
+            cursor: pointer;
+            background: #FFFFFF;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .badges-row {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1E293B;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        .card-hint {
+            font-size: 11px;
+            color: #94A3B8;
+            text-align: right;
+        }
+
+        .badge {
+            padding: 2.5px 6.5px;
+            border-radius: 5px;
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+        .badge-blue { background: #DBEAFE; color: #1D4ED8; }
+        .badge-green { background: #D1FAE5; color: #047857; }
+        .badge-red { background: #FEE2E2; color: #B91C1C; }
+        .badge-gray { background: #F1F5F9; color: #475569; }
+        .badge-type { background: #EDE9FE; color: #6D28D9; }
+        .badge-warning { background: #EF4444; color: white; }
+        .badge-caution { background: #F59E0B; color: white; }
+
+        .amount-tag {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #2563EB;
+            background: #EFF6FF;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        /* 접이식 본문 */
+        .card-body {
+            padding: 14px 15px;
+            background: #F8FAFC;
+            border-top: 1px dashed #E2E8F0;
+            display: none;
+        }
+        .card-body.open {
+            display: block;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            font-size: 12.5px;
+            color: #334155;
+            margin-bottom: 10px;
+        }
+        .meta-row {
+            font-size: 11.5px;
+            color: #64748B;
+            background: #FFFFFF;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .risk-tags-box {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .tag-item {
+            font-size: 11.5px;
+            color: #B45309;
+            font-weight: 700;
+        }
+
+        /* 테이블 */
+        .participants-box {
+            margin-top: 10px;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .participants-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sub-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+            white-space: nowrap;
+        }
+        .sub-table th {
+            background: #F1F5F9;
+            color: #475569;
+            padding: 5px 8px;
+            font-weight: 600;
+            text-align: left;
+            border-bottom: 1px solid #CBD5E1;
+        }
+        .sub-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .winner-row {
+            background: #ECFDF5;
+            font-weight: 700;
+            color: #065F46;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 20px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <div class="header-brand">
+            <h1>🏢 리버파크자이 입찰 모니터링</h1>
+            <span class="kakao-badge">카톡 공유용</span>
+        </div>
+        <div class="header-desc">K-apt 실시간 공시 데이터 | 2026-09-08 11:26:10 기준</div>
+    </div>
+
+    <!-- 필터 바 -->
+    <div class="share-bar">
+        <div class="btn-filter active" onclick="applyFilter('ALL', this)">전체 (9)</div>
+        <div class="btn-filter" onclick="applyFilter('낙찰', this)">낙찰완료 (4)</div>
+        <div class="btn-filter" onclick="applyFilter('WARN', this)">감사주의 (9)</div>
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-box-num">9</div>
+            <div class="stat-box-lbl">전체</div>
+        </div>
+        <div class="stat-box green">
+            <div class="stat-box-num">0</div>
+            <div class="stat-box-lbl">진행공고</div>
+        </div>
+        <div class="stat-box blue">
+            <div class="stat-box-num">4</div>
+            <div class="stat-box-lbl">낙찰완료</div>
+        </div>
+        <div class="stat-box red">
+            <div class="stat-box-num">9</div>
+            <div class="stat-box-lbl">감사주의</div>
+        </div>
+    </div>
+
+    <!-- 입찰 리스트 피드 -->
+    <div class="feed-container">
+        
+        <div class="bid-card filter-item" data-status="낙찰" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(0)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-blue">낙찰</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">63,600,000</div>
+                </div>
+                <div class="card-title">[충북] 승강기 유지관리업체 선정 입찰</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-0">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2026-06-18 15:56:06</div>
+                    <div><strong>⏰ 마감일시:</strong> 2026-06-30 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최저 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>주식회사 일택</strong></span>
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 3개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>투찰금액</th>
+                                <th>투찰일</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>오티스서비스엑스퍼트(유)</strong></td>
+                    <td>78,864,000원</td>
+                    <td>2026-06-30</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="winner-row">
+                    <td>2</td>
+                    <td><strong>자이엘리베이터주식회사</strong></td>
+                    <td>63,600,000원</td>
+                    <td>2026-06-30</td>
+                    <td>🏆 낙찰</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>현대엘리베이터(주)대전지사</strong></td>
+                    <td>184,440,000원</td>
+                    <td>2026-06-30</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="낙찰" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(1)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-blue">낙찰</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">25,350,000</div>
+                </div>
+                <div class="card-title">[충북] 긴급 승강기 노후 부품 교체 공사 재입찰공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-1">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2026-03-27 08:41:23</div>
+                    <div><strong>⏰ 마감일시:</strong> 2026-04-02 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최저 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>리버파크자이 아파트
+						
+							
+							
+						
+
+						
+						
+							(입대의)</strong></span>
+                <span>📞 0437162321</span>
+                <span>🏘️ 2529개동 (세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 3개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>투찰금액</th>
+                                <th>투찰일</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>(주)한국엘레파킹시스템</strong></td>
+                    <td>35,430,000원</td>
+                    <td>2026-04-02</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="winner-row">
+                    <td>2</td>
+                    <td><strong>자이엘리베이터 주식회사 수원지사</strong></td>
+                    <td>25,350,000원</td>
+                    <td>2026-04-02</td>
+                    <td>🏆 낙찰</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>현대엘리베이터(주)대전지사</strong></td>
+                    <td>32,490,000원</td>
+                    <td>2026-04-01</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="유찰" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(2)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-red">유찰</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">금액미정</div>
+                </div>
+                <div class="card-title">[충북] 긴급 승강기 노후 부품 교체공사 입찰공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-2">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2026-03-20 11:44:43</div>
+                    <div><strong>⏰ 마감일시:</strong> 2026-03-26 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최저 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>리버파크자이 아파트
+						
+							
+							
+						
+
+						
+						
+							(입대의)</strong></span>
+                <span>📞 0437162321</span>
+                <span>🏘️ 2529개동 (세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 1개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>투찰금액</th>
+                                <th>투찰일</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>**********</strong></td>
+                    <td>**********원</td>
+                    <td>**********</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="취소" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(3)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-red">취소</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">금액미정</div>
+                </div>
+                <div class="card-title">[충북] 긴급 승강기 노후 부품 교체공사 입찰공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-3">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2026-03-19 14:42:46</div>
+                    <div><strong>⏰ 마감일시:</strong> 2026-03-25 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최저 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>리버파크자이 아파트
+						
+							
+							
+						
+
+						
+						
+							(입대의)</strong></span>
+                <span>📞 0437162321</span>
+                <span>🏘️ 2529개동 (세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="낙찰" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(4)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-blue">낙찰</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">65,000,000</div>
+                </div>
+                <div class="card-title">[충북] 알뜰장 운영 사업자 선정 공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-4">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2025-11-19 09:16:36</div>
+                    <div><strong>⏰ 마감일시:</strong> 2025-12-01 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최고 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>주식회사 일택</strong></span>
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 3개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>투찰금액</th>
+                                <th>투찰일</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>(주)새벽유통</strong></td>
+                    <td>45,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="winner-row">
+                    <td>2</td>
+                    <td><strong>늘푸른농수산주식회사</strong></td>
+                    <td>65,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>🏆 낙찰</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>세명농산주식회사</strong></td>
+                    <td>41,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="낙찰" data-risk="WARNING">
+            <div class="card-header" onclick="toggleCard(5)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-blue">낙찰</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-warning">⚠️ 주의 필요</span>
+                    </div>
+                    <div class="amount-tag">2,893,000,000</div>
+                </div>
+                <div class="card-title">[충북] 아파트 지하 주차장 균열보수 및 재도장 공사 업체 선정 입찰공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-5">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2025-11-18 11:58:42</div>
+                    <div><strong>⏰ 마감일시:</strong> 2025-12-01 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최저 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>리버파크자이 아파트
+						
+							
+							
+						
+
+						
+						
+							(입대의)</strong></span>
+                <span>📞 0437162321</span>
+                <span>🏘️ 2529개동 (세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span><span class="tag-item">📌 사전 단독투찰 패턴(들러리 의심)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 6개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>투찰금액</th>
+                                <th>투찰일</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>(주)정민씨앤씨</strong></td>
+                    <td>**********원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>2</td>
+                    <td><strong>(주)효덕산업</strong></td>
+                    <td>3,219,500,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>대표건설(주)</strong></td>
+                    <td>3,068,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>4</td>
+                    <td><strong>색채산업개발(주)</strong></td>
+                    <td>3,519,700,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="winner-row">
+                    <td>5</td>
+                    <td><strong>엘케이개발(주)</strong></td>
+                    <td>2,893,000,000원</td>
+                    <td>2025-11-28</td>
+                    <td>🏆 낙찰</td>
+                </tr>
+                
+                <tr class="">
+                    <td>6</td>
+                    <td><strong>케이건설 주식회사</strong></td>
+                    <td>3,685,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="취소" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(6)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-red">취소</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">금액미정</div>
+                </div>
+                <div class="card-title">[충북] 아파트 지하 주차장 균열보수 및 재도장 공사 업체 선정 입찰공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-6">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2025-11-18 10:33:58</div>
+                    <div><strong>⏰ 마감일시:</strong> 2025-12-01 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최고 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>리버파크자이 아파트
+						
+							
+							
+						
+
+						
+						
+							(입대의)</strong></span>
+                <span>📞 0437162321</span>
+                <span>🏘️ 2529개동 (세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="낙찰무효" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(7)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-red">낙찰무효</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">금액미정</div>
+                </div>
+                <div class="card-title">[충북] 알뜰장 및 자이 한마음 행사 운영사업자선정공고</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-7">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2025-10-01 10:55:51</div>
+                    <div><strong>⏰ 마감일시:</strong> 2025-10-16 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최고 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>주식회사 일택</strong></span>
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 4개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>투찰금액</th>
+                                <th>투찰일</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>**********</strong></td>
+                    <td>**********원</td>
+                    <td>**********</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>2</td>
+                    <td><strong>**********</strong></td>
+                    <td>**********원</td>
+                    <td>**********</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>**********</strong></td>
+                    <td>**********원</td>
+                    <td>**********</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>4</td>
+                    <td><strong>**********</strong></td>
+                    <td>**********원</td>
+                    <td>**********</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-status="취소" data-risk="CAUTION">
+            <div class="card-header" onclick="toggleCard(8)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-red">취소</span>
+                        <span class="badge badge-type">낙찰결과</span>
+                        <span class="badge badge-caution">🔍 검토 요망</span>
+                    </div>
+                    <div class="amount-tag">금액미정</div>
+                </div>
+                <div class="card-title">[충북] 알뜰장</div>
+                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-8">
+                <div class="meta-grid">
+                    <div><strong>📅 공고/등록일:</strong> 2025-09-30 17:46:47</div>
+                    <div><strong>⏰ 마감일시:</strong> 2025-10-16 17:00:00</div>
+                    <div><strong>⚖️ 낙찰방식:</strong> 최고 낙찰</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>주식회사 일택</strong></span>
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="footer-note">
+        카카오톡에서 전송받은 이 파일을 누르면 스마트폰에서 즉시 열립니다.<br>
+        국토교통부 K-apt 데이터 기반 분석 리포트
+    </div>
+
+    <script>
+        function toggleCard(id) {
+            var body = document.getElementById('card-body-' + id);
+            if (body) {
+                body.classList.toggle('open');
+            }
+        }
+
+        function applyFilter(type, el) {
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+
+            var cards = document.querySelectorAll('.filter-item');
+            cards.forEach(c => {
+                if (type === 'ALL') {
+                    c.style.display = 'block';
+                } else if (type === '낙찰') {
+                    c.style.display = (c.getAttribute('data-status') === '낙찰') ? 'block' : 'none';
+                } else if (type === 'WARN') {
+                    var risk = c.getAttribute('data-risk');
+                    c.style.display = (risk === 'WARNING' || risk === 'CAUTION') ? 'block' : 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
