@@ -47,38 +47,48 @@ def generate_kakao_text(bids_data, apt_name="리버파크자이"):
     now_str = time.strftime("%Y-%m-%d %H:%M")
     total_count = len(bids_data)
     awarded_count = sum(1 for b in bids_data if b["bid"].get("status") == "낙찰")
+    total_count = len(bids_data)
+    public_count = sum(1 for b in bids_data if b["bid"].get("type_code") in [1, 2, 3])
+    private_count = sum(1 for b in bids_data if b["bid"].get("type_code") == 4)
     active_count = sum(1 for b in bids_data if b["bid"].get("type_code") == 1)
+    awarded_count = sum(1 for b in bids_data if b["bid"].get("status") == "낙찰")
+    warning_count = sum(1 for b in bids_data if b["analysis"].get("risk_level") in ["WARNING", "CAUTION"])
 
     lines = []
-    lines.append(f"🏢 [{apt_name} 아파트 K-apt 입찰 브리핑]")
+    lines.append(f"🏢 [{apt_name} 아파트 K-apt 입찰·수의계약 종합 브리핑]")
     lines.append(f"• 기준일시: {now_str}")
-    lines.append(f"• 입찰현황: 총 {total_count}건 (진행공고 {active_count}건 / 낙찰완료 {awarded_count}건)")
+    lines.append(f"• 전체현황: 총 {total_count}건 (공개입찰 {public_count}건 / 수의계약 {private_count}건)")
     lines.append("─────────────────────")
+    lines.append("📢 [최근 주요 공개입찰 & 수의계약 목록]")
 
-    for idx, item in enumerate(bids_data, 1):
+    for idx, item in enumerate(bids_data[:15], 1):
         b = item["bid"]
         a = item["analysis"]
         status = b.get("status", "-")
         title = b.get("title", "")
         amount = b.get("amount", "-")
         date = b.get("date", "")[:10]
+        type_name = b.get("type_name", "")
 
-        # 금액 표시 정리
         amt_str = f" | {amount}원" if amount != "-" else ""
-        lines.append(f"{idx}. [{status}] {title}{amt_str} ({date})")
+        comp_str = f" ({b.get('company')})" if b.get("company") else ""
+        lines.append(f"{idx}. [{type_name}] {title}{comp_str}{amt_str} ({date})")
 
         if a.get("risk_tags"):
             lines.append(f"   ⚠️ 분석: {', '.join(a['risk_tags'])}")
 
+    if len(bids_data) > 15:
+        lines.append(f"... 외 {len(bids_data) - 15}건 생략")
+
     lines.append("─────────────────────")
-    lines.append("📱 상세 투찰업체 및 계약조건은 첨부된 '리버파크자이_Kapt_모바일공유리포트.html' 파일을 카톡에서 바로 터치하시면 열람하실 수 있습니다.")
+    lines.append("📱 상세 투찰업체 및 계약조건은 첨부된 '리버파크자이_Kapt_모바일공유리포트.html' 또는 깃허브 링크에서 바로 열람하실 수 있습니다.")
 
     return "\n".join(lines)
 
 def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name="리버파크자이"):
     """
     스마트폰 카카오톡 인앱 브라우저 및 PC 브라우저에서 모두 완벽하게 작동하는
-    모바일 반응형 단일 HTML 대시보드 리포트를 생성합니다.
+    모바일 반응형 단일 HTML 대시보드 리포트를 생성합니다. (공개입찰 + 수의계약 통합)
     """
     if not output_path:
         reports_dir = os.path.join(os.path.dirname(__file__), "reports")
@@ -88,6 +98,8 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
 
     total_count = len(bids_data)
+    public_count = sum(1 for b in bids_data if b["bid"].get("type_code") in [1, 2, 3])
+    private_count = sum(1 for b in bids_data if b["bid"].get("type_code") == 4)
     active_count = sum(1 for b in bids_data if b["bid"].get("type_code") == 1)
     awarded_count = sum(1 for b in bids_data if b["bid"].get("status") == "낙찰")
     warning_count = sum(1 for b in bids_data if b["analysis"].get("risk_level") in ["WARNING", "CAUTION"])
@@ -97,10 +109,13 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
         b = item["bid"]
         a = item["analysis"]
         d = b.get("detail")
+        is_private = (b.get("type_code") == 4)
 
         status = b.get("status", "-")
         status_badge_class = "badge-gray"
-        if status == "낙찰":
+        if is_private:
+            status_badge_class = "badge-purple"
+        elif status == "낙찰":
             status_badge_class = "badge-blue"
         elif status == "진행중":
             status_badge_class = "badge-green"
@@ -119,12 +134,12 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
             tags = "".join([f'<span class="tag-item">📌 {t}</span>' for t in a["risk_tags"]])
             risk_tags_html = f'<div class="risk-tags-box">{tags}</div>'
 
-        # 참가업체 테이블 HTML
+        # 참가업체/계약업체 테이블 HTML
         participants_html = ""
         if d and d.get("participants"):
             rows_html = []
             for p in d["participants"]:
-                win_icon = "🏆 낙찰" if p.get("is_winner") == "Y" else "-"
+                win_icon = "🏆 계약/낙찰" if p.get("is_winner") == "Y" else "-"
                 row_cls = "winner-row" if p.get("is_winner") == "Y" else ""
                 rows_html.append(f"""
                 <tr class="{row_cls}">
@@ -135,17 +150,18 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
                     <td>{win_icon}</td>
                 </tr>
                 """)
+            sub_title = "🏢 계약 체결 업체 상세" if is_private else f"📊 응찰 업체 투찰 내역 (총 {len(d['participants'])}개사)"
             participants_html = f"""
             <div class="participants-box">
-                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 {len(d['participants'])}개사)</div>
+                <div class="participants-title">{sub_title}</div>
                 <div class="table-responsive">
                     <table class="sub-table">
                         <thead>
                             <tr>
                                 <th>순위</th>
                                 <th>회사명</th>
-                                <th>투찰금액</th>
-                                <th>투찰일</th>
+                                <th>금액</th>
+                                <th>일자</th>
                                 <th>결과</th>
                             </tr>
                         </thead>
@@ -160,16 +176,23 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
         admin_info_html = ""
         if d and d.get("admin_info"):
             ad = d["admin_info"]
+            mgr = f"<span>🏢 관리업자: <strong>{ad.get('manager_company')}</strong></span>" if ad.get('manager_company') else ""
             admin_info_html = f"""
             <div class="meta-row">
-                <span>🏢 관리업자: <strong>{ad.get('manager_company')}</strong></span>
-                <span>📞 {ad.get('phone')}</span>
-                <span>🏘️ {ad.get('dong_count')}개동 ({ad.get('household_count')}세대)</span>
+                {mgr}
+                <span>📞 {ad.get('phone', '-')}</span>
+                <span>🏘️ {ad.get('dong_count', '-')}개동 ({ad.get('household_count', '-')}세대)</span>
             </div>
             """
 
+        reason_html = ""
+        if d and d.get("contract_reason"):
+            reason_html = f"<div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> {d.get('contract_reason')}</div>"
+
+        category_type = "PRIVATE" if is_private else "PUBLIC"
+
         card_html = f"""
-        <div class="bid-card filter-item" data-status="{status}" data-risk="{risk_level}">
+        <div class="bid-card filter-item" data-category="{category_type}" data-status="{status}" data-risk="{risk_level}">
             <div class="card-header" onclick="toggleCard({idx})">
                 <div class="header-top">
                     <div class="badges-row">
@@ -180,14 +203,15 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
                     <div class="amount-tag">{b.get('amount') if b.get('amount') != '-' else '금액미정'}</div>
                 </div>
                 <div class="card-title">{b.get('title')}</div>
-                <div class="card-hint">터치하여 상세 및 투찰업체 보기 ▼</div>
+                <div class="card-hint">{'계약업체: ' + b.get('company') if b.get('company') else '상세 보기'} ▼</div>
             </div>
 
             <div class="card-body" id="card-body-{idx}">
+                {reason_html}
                 <div class="meta-grid">
-                    <div><strong>📅 공고/등록일:</strong> {b.get('date')}</div>
-                    <div><strong>⏰ 마감일시:</strong> {b.get('limit_date')}</div>
-                    <div><strong>⚖️ 낙찰방식:</strong> {b.get('method')}</div>
+                    <div><strong>📅 계약/등록일:</strong> {b.get('date')}</div>
+                    <div><strong>⏰ 마감/계약기간:</strong> {b.get('limit_date')}</div>
+                    <div><strong>⚖️ 계약방식:</strong> {b.get('method')}</div>
                     <div><strong>🏢 발주단지:</strong> {b.get('apt')}</div>
                 </div>
 
@@ -302,6 +326,7 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
         }}
         .stat-box.green {{ border-top: 3px solid #10B981; }}
         .stat-box.blue {{ border-top: 3px solid #2563EB; }}
+        .stat-box.purple {{ border-top: 3px solid #A855F7; }}
         .stat-box.red {{ border-top: 3px solid #EF4444; }}
         .stat-box-num {{ font-size: 18px; font-weight: 800; color: #0F172A; }}
         .stat-box-lbl {{ font-size: 10.5px; color: var(--text-muted); font-weight: 600; }}
@@ -360,6 +385,7 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
         .badge-blue {{ background: #DBEAFE; color: #1D4ED8; }}
         .badge-green {{ background: #D1FAE5; color: #047857; }}
         .badge-red {{ background: #FEE2E2; color: #B91C1C; }}
+        .badge-purple {{ background: #F3E8FF; color: #7E22CE; }}
         .badge-gray {{ background: #F1F5F9; color: #475569; }}
         .badge-type {{ background: #EDE9FE; color: #6D28D9; }}
         .badge-warning {{ background: #EF4444; color: white; }}
@@ -485,7 +511,8 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
     <!-- 필터 바 -->
     <div class="share-bar">
         <div class="btn-filter active" onclick="applyFilter('ALL', this)">전체 ({total_count})</div>
-        <div class="btn-filter" onclick="applyFilter('낙찰', this)">낙찰완료 ({awarded_count})</div>
+        <div class="btn-filter" onclick="applyFilter('PUBLIC', this)">공개입찰 ({public_count})</div>
+        <div class="btn-filter" onclick="applyFilter('PRIVATE', this)">수의계약 ({private_count})</div>
         <div class="btn-filter" onclick="applyFilter('WARN', this)">감사주의 ({warning_count})</div>
     </div>
 
@@ -495,13 +522,13 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
             <div class="stat-box-num">{total_count}</div>
             <div class="stat-box-lbl">전체</div>
         </div>
-        <div class="stat-box green">
-            <div class="stat-box-num">{active_count}</div>
-            <div class="stat-box-lbl">진행공고</div>
-        </div>
         <div class="stat-box blue">
-            <div class="stat-box-num">{awarded_count}</div>
-            <div class="stat-box-lbl">낙찰완료</div>
+            <div class="stat-box-num">{public_count}</div>
+            <div class="stat-box-lbl">공개입찰</div>
+        </div>
+        <div class="stat-box purple">
+            <div class="stat-box-num">{private_count}</div>
+            <div class="stat-box-lbl">수의계약</div>
         </div>
         <div class="stat-box red">
             <div class="stat-box-num">{warning_count}</div>
@@ -535,8 +562,10 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
             cards.forEach(c => {{
                 if (type === 'ALL') {{
                     c.style.display = 'block';
-                }} else if (type === '낙찰') {{
-                    c.style.display = (c.getAttribute('data-status') === '낙찰') ? 'block' : 'none';
+                }} else if (type === 'PUBLIC') {{
+                    c.style.display = (c.getAttribute('data-category') === 'PUBLIC') ? 'block' : 'none';
+                }} else if (type === 'PRIVATE') {{
+                    c.style.display = (c.getAttribute('data-category') === 'PRIVATE') ? 'block' : 'none';
                 }} else if (type === 'WARN') {{
                     var risk = c.getAttribute('data-risk');
                     c.style.display = (risk === 'WARNING' || risk === 'CAUTION') ? 'block' : 'none';

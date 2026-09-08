@@ -89,21 +89,51 @@ def analyze_bid(bid_item, detail_info=None):
         except Exception:
             pass
 
-    # 4. 종합 브리핑 요약문 생성
+    # 4. 수의계약 특화 분석 (Private Contract Audit)
+    if bid_item.get("type_name") == "수의계약":
+        comp_name = bid_item.get("company", "")
+        # 금액 파싱
+        clean_amt = re.sub(r'[^\d]', '', str(amount))
+        amt_val = int(clean_amt) if clean_amt.isdigit() else 0
+
+        if amt_val >= 50000000:
+            analysis["risk_tags"].append(f"5천만원 이상 고액 수의계약({amount}원)")
+            analysis["risk_level"] = "WARNING"
+        elif amt_val >= 10000000:
+            analysis["risk_tags"].append(f"1천만원 이상 수의계약({amount}원)")
+            if analysis["risk_level"] == "NORMAL":
+                analysis["risk_level"] = "CAUTION"
+
+        if "장기수선" in title or (detail_info and "장기수선" in " ".join(detail_info.get("basic_info", {}).values())):
+            analysis["risk_tags"].append("장기수선계획 공사 수의계약 - 절차 검증 필요")
+            analysis["risk_level"] = "WARNING"
+
+        if detail_info and detail_info.get("contract_reason"):
+            analysis["details_summary"].append(f"체결사유: {detail_info.get('contract_reason')}")
+
+    # 5. 종합 브리핑 요약문 생성
     summary_lines = []
-    summary_lines.append(f"[{bid_item.get('type_name')}] {title}")
-    summary_lines.append(f"• 진행상태: {status} | 낙찰방식: {method}")
-    if notice_days is not None:
-        summary_lines.append(f"• 공고기간: {reg_date_str[:10]} ~ {limit_date_str[:10]} (총 {notice_days}일)")
-    if amount and amount != "-":
-        summary_lines.append(f"• 낙찰금액: {amount}원")
-    if winner_company:
-        summary_lines.append(f"• 최종낙찰사: {winner_company}")
-    if participants_count > 0:
-        summary_lines.append(f"• 응찰업체수: {participants_count}개사")
+    if bid_item.get("type_name") == "수의계약":
+        summary_lines.append(f"[수의계약] {title}")
+        summary_lines.append(f"• 계약업체: {bid_item.get('company')} | 계약금액: {amount}원")
+        summary_lines.append(f"• 계약일: {reg_date_str} | 계약기간: {limit_date_str}")
+        if detail_info and detail_info.get("contract_reason"):
+            summary_lines.append(f"• 체결사유: {detail_info.get('contract_reason')}")
+    else:
+        summary_lines.append(f"[{bid_item.get('type_name')}] {title}")
+        summary_lines.append(f"• 진행상태: {status} | 낙찰방식: {method}")
+        if notice_days is not None:
+            summary_lines.append(f"• 공고기간: {reg_date_str[:10]} ~ {limit_date_str[:10]} (총 {notice_days}일)")
+        if amount and amount != "-":
+            summary_lines.append(f"• 낙찰금액: {amount}원")
+        if winner_company:
+            summary_lines.append(f"• 최종낙찰사: {winner_company}")
+        if participants_count > 0:
+            summary_lines.append(f"• 응찰업체수: {participants_count}개사")
 
     if analysis["risk_tags"]:
         summary_lines.append(f"⚠️ [감사 분석 포인트]: {' / '.join(analysis['risk_tags'])}")
 
     analysis["summary"] = "\n".join(summary_lines)
     return analysis
+

@@ -225,3 +225,157 @@ class KaptScraper:
         except Exception as e:
             print(f"[경고] 상세 조회 오류 (bidNum: {bid_num}): {e}")
             return None
+
+    def fetch_private_contracts(self, apt_name="리버파크자이", days=365):
+        """
+        K-apt에서 지정 단지의 수의계약 체결 및 결과 공개 목록을 수집합니다.
+        """
+        token = self._ensure_csrf_token()
+        now = datetime.now()
+        start_date = (now - timedelta(days=min(days, 360))).strftime("%Y-%m-%d")
+        end_date = now.strftime("%Y-%m-%d")
+
+        enc_apt = urllib.parse.quote(apt_name)
+        url = (
+            f"https://www.k-apt.go.kr/bid/privateContractList.do"
+            f"?pageSelect=100&searchBidGb=bid_gb_1&bidTitle="
+            f"&aptName={enc_apt}&searchDateGb=reg"
+            f"&dateStart={start_date}&dateEnd={end_date}&dateArea=4"
+            f"&pageNo=1"
+        )
+        private_bids = []
+        try:
+            req = urllib.request.Request(url, headers=self.headers)
+            with self.opener.open(req, timeout=12) as res:
+                html = res.read().decode('utf-8', errors='ignore')
+
+            soup = BeautifulSoup(html, 'html.parser')
+            tbody = soup.find('tbody')
+            if not tbody:
+                return private_bids
+
+            for tr in tbody.find_all('tr'):
+                tds = tr.find_all('td')
+                if len(tds) < 7:
+                    continue
+
+                onclick = ""
+                for td in tds:
+                    oc = td.get('onclick', '')
+                    if 'goView' in oc:
+                        onclick = oc
+                        break
+
+                pc_num = ""
+                m = re.search(r'goView\([\'"]([^\'"]+)[\'"]\)', onclick)
+                if m:
+                    pc_num = m.group(1)
+
+                raw_title = tds[3].get_text(separator=' ', strip=True)
+                clean_title = re.sub(r'\s+', ' ', raw_title)
+                apt_field = re.sub(r'\s+', ' ', tds[1].get_text(separator=' ', strip=True))
+
+                bid_item = {
+                    "seq": tds[0].get_text(strip=True),
+                    "type_code": 4,
+                    "type_name": "수의계약",
+                    "method": "수의계약",
+                    "title": clean_title,
+                    "limit_date": tds[6].get_text(strip=True),  # 계약기간
+                    "status": "수의계약",
+                    "amount": tds[5].get_text(strip=True),
+                    "apt": apt_field,
+                    "date": tds[4].get_text(strip=True),  # 계약일
+                    "company": tds[2].get_text(strip=True),  # 계약업체
+                    "bid_num": pc_num,
+                    "detail": None
+                }
+                private_bids.append(bid_item)
+
+        except Exception as e:
+            print(f"[경고] 수의계약 수집 중 오류: {e}")
+
+        return private_bids
+
+    def fetch_private_contract_detail(self, pc_num):
+        """
+        수의계약 상세 정보(체결사유, 업체상세, 공사분류 등)를 파싱합니다.
+        """
+        if not pc_num:
+            return None
+
+        token = self._ensure_csrf_token()
+        detail_url = "https://www.k-apt.go.kr/bid/privateContractDetail.do"
+        post_data = urllib.parse.urlencode({
+            'pcNum': pc_num,
+            '_csrf': token
+        }).encode('utf-8')
+
+        req_headers = dict(self.headers)
+        req_headers['X-CSRF-TOKEN'] = token
+        req_headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+
+        try:
+            req = urllib.request.Request(detail_url, data=post_data, headers=req_headers)
+            with self.opener.open(req, timeout=12) as res:
+                html = res.read().decode('utf-8', errors='ignore')
+
+            soup = BeautifulSoup(html, 'html.parser')
+            detail_info = {
+                "basic_info": {},
+                "admin_info": {},
+                "contract_reason": "",
+                "participants": []
+            }
+
+            for t in soup.find_all('table'):
+                rows = [[c.get_text(strip=True) for c in r.find_all(['th', 'td'])] for r in t.find_all('tr')]
+                if not rows:
+                    continue
+                header_text = "".join([c for r in rows[:2] for c in r])
+
+                if "수의계약 최신공개 정보" in header_text or "계약명" in header_text:
+                    for r in rows:
+                        if len(r) >= 2:
+                            k = r[0].strip()
+                            v = r[1].strip()
+                            detail_info["basic_info"][k] = v
+                            if "사유" in k and "변경사유" not in k:
+                                detail_info["contract_reason"] = v
+
+                elif "아파트명" in header_text or "관리사무소 주소" in header_text:
+                    for r in rows:
+                        if len(r) >= 6 and "아파트명" not in r[0]:
+                            detail_info["admin_info"] = {
+                                "apt_name": r[0],
+                                "address": r[1],
+                                "phone": r[2],
+                                "fax": r[3],
+                                "dong_count": r[4],
+                                "household_count": r[5]
+                            }
+
+            # 수의계약 참여업체 형태로 포맷팅 (단일 계약업체)
+            comp_name = detail_info["basic_info"].get("계약업체명", "")
+            comp_ceo = detail_info["basic_info"].get("업체대표자명", "")
+            comp_biz = detail_info["basic_info"].get("사업자등록번호", "")
+            comp_amt = detail_info["basic_info"].get("계약금액", "")
+            if comp_name:
+                detail_info["participants"].append({
+                    "rank": "1",
+                    "company": comp_name,
+                    "biz_no": comp_biz,
+                    "ceo": comp_ceo,
+                    "tel": detail_info["basic_info"].get("업체전화번호", ""),
+                    "bid_time": detail_info["basic_info"].get("계약(예정)일", ""),
+                    "attend_briefing": "-",
+                    "doc_valid": "Y",
+                    "bid_amount": comp_amt,
+                    "is_winner": "Y"
+                })
+
+            return detail_info
+        except Exception as e:
+            print(f"[경고] 수의계약 상세 조회 오류 (pcNum: {pc_num}): {e}")
+            return None
+
