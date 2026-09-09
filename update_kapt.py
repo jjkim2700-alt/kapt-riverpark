@@ -9,7 +9,7 @@ import time
 from kapt_scraper import KaptScraper
 from kapt_analyzer import analyze_bid
 from kapt_notifier import generate_html_report
-from kapt_db import detect_changes
+from kapt_db import detect_changes, load_db
 
 def main():
     apt_name = "리버파크자이"
@@ -23,6 +23,14 @@ def main():
     # 2. 수의계약 수집
     private_bids = scraper.fetch_private_contracts(apt_name=apt_name, days=365)
     print(f"-> 수의계약: {len(private_bids)}건 수집 완료.")
+
+    # [안전장치] 일시적 해외 네트워크 지연 등으로 수의계약 수집이 0건일 경우, 기존 DB에서 이전 수의계약 내역 자동 복구
+    if not private_bids:
+        db = load_db()
+        cached_private = [v for v in db.values() if v.get("type_code") == 4]
+        if cached_private:
+            print(f"-> [안전 보호] 이전 캐시 DB에서 수의계약 {len(cached_private)}건 자동 복구 완료.")
+            private_bids = cached_private
 
     # 상세 정보 조회
     for b in public_bids:

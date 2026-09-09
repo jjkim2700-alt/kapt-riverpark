@@ -26,6 +26,8 @@ class KaptScraper:
         )
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
             'Referer': 'https://www.k-apt.go.kr/'
         }
         self.csrf_token = None
@@ -244,56 +246,65 @@ class KaptScraper:
             f"&pageNo=1"
         )
         private_bids = []
-        try:
-            req = urllib.request.Request(url, headers=self.headers)
-            with self.opener.open(req, timeout=12) as res:
-                html = res.read().decode('utf-8', errors='ignore')
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request(url, headers=self.headers)
+                with self.opener.open(req, timeout=25) as res:
+                    html = res.read().decode('utf-8', errors='ignore')
 
-            soup = BeautifulSoup(html, 'html.parser')
-            tbody = soup.find('tbody')
-            if not tbody:
-                return private_bids
+                soup = BeautifulSoup(html, 'html.parser')
+                tbody = soup.find('tbody')
+                if not tbody:
+                    if attempt < 2:
+                        time.sleep(1)
+                        continue
+                    return private_bids
 
-            for tr in tbody.find_all('tr'):
-                tds = tr.find_all('td')
-                if len(tds) < 7:
-                    continue
+                for tr in tbody.find_all('tr'):
+                    tds = tr.find_all('td')
+                    if len(tds) < 7:
+                        continue
 
-                onclick = ""
-                for td in tds:
-                    oc = td.get('onclick', '')
-                    if 'goView' in oc:
-                        onclick = oc
-                        break
+                    onclick = ""
+                    for td in tds:
+                        oc = td.get('onclick', '')
+                        if 'goView' in oc:
+                            onclick = oc
+                            break
 
-                pc_num = ""
-                m = re.search(r'goView\([\'"]([^\'"]+)[\'"]\)', onclick)
-                if m:
-                    pc_num = m.group(1)
+                    pc_num = ""
+                    m = re.search(r'goView\([\'"]([^\'"]+)[\'"]\)', onclick)
+                    if m:
+                        pc_num = m.group(1)
 
-                raw_title = tds[3].get_text(separator=' ', strip=True)
-                clean_title = re.sub(r'\s+', ' ', raw_title)
-                apt_field = re.sub(r'\s+', ' ', tds[1].get_text(separator=' ', strip=True))
+                    raw_title = tds[3].get_text(separator=' ', strip=True)
+                    clean_title = re.sub(r'\s+', ' ', raw_title)
+                    apt_field = re.sub(r'\s+', ' ', tds[1].get_text(separator=' ', strip=True))
 
-                bid_item = {
-                    "seq": tds[0].get_text(strip=True),
-                    "type_code": 4,
-                    "type_name": "수의계약",
-                    "method": "수의계약",
-                    "title": clean_title,
-                    "limit_date": tds[6].get_text(strip=True),  # 계약기간
-                    "status": "수의계약",
-                    "amount": tds[5].get_text(strip=True),
-                    "apt": apt_field,
-                    "date": tds[4].get_text(strip=True),  # 계약일
-                    "company": tds[2].get_text(strip=True),  # 계약업체
-                    "bid_num": pc_num,
-                    "detail": None
-                }
-                private_bids.append(bid_item)
+                    bid_item = {
+                        "seq": tds[0].get_text(strip=True),
+                        "type_code": 4,
+                        "type_name": "수의계약",
+                        "method": "수의계약",
+                        "title": clean_title,
+                        "limit_date": tds[6].get_text(strip=True),  # 계약기간
+                        "status": "수의계약",
+                        "amount": tds[5].get_text(strip=True),
+                        "apt": apt_field,
+                        "date": tds[4].get_text(strip=True),  # 계약일
+                        "company": tds[2].get_text(strip=True),  # 계약업체
+                        "bid_num": pc_num,
+                        "detail": None
+                    }
+                    private_bids.append(bid_item)
 
-        except Exception as e:
-            print(f"[경고] 수의계약 수집 중 오류: {e}")
+                if private_bids:
+                    break
+
+            except Exception as e:
+                print(f"[경고] 수의계약 수집 시도 {attempt+1}/3 오류: {e}")
+                if attempt < 2:
+                    time.sleep(2)
 
         return private_bids
 
