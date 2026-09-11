@@ -81,7 +81,9 @@ def generate_kakao_text(bids_data, apt_name="리버파크자이"):
         lines.append(f"... 외 {len(bids_data) - 15}건 생략")
 
     lines.append("─────────────────────")
-    lines.append("📱 상세 투찰업체 및 계약조건은 첨부된 '리버파크자이_Kapt_모바일공유리포트.html' 또는 깃허브 링크에서 바로 열람하실 수 있습니다.")
+    lines.append("📱 [실시간 모바일 대시보드 링크 (PC 조작 없이 터치하면 즉시 최신 확인)]")
+    lines.append("👉 https://jjkim2700-alt.github.io/kapt-riverpark/")
+    lines.append("(위 링크를 누르시면 스마트폰에서 실시간 공개입찰 및 수의계약 36건을 바로 열람하실 수 있습니다)")
 
     return "\n".join(lines)
 
@@ -95,7 +97,9 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
         os.makedirs(reports_dir, exist_ok=True)
         output_path = os.path.join(reports_dir, "kapt_report_latest.html")
 
-    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    from datetime import datetime, timezone, timedelta
+    kst = timezone(timedelta(hours=9))
+    now_str = datetime.now(kst).strftime("%Y-%m-%d %H:%M:%S (한국시간)")
 
     total_count = len(bids_data)
     public_count = sum(1 for b in bids_data if b["bid"].get("type_code") in [1, 2, 3])
@@ -228,7 +232,8 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{apt_name} K-apt 입찰 모니터링</title>
+    <meta http-equiv="refresh" content="300">
+    <title>{apt_name} K-apt 입찰·수의계약 실시간 모니터링</title>
     <style>
         :root {{
             --bg: #F8FAFC;
@@ -502,10 +507,16 @@ def generate_html_report(bids_data, output_path=None, auto_open=False, apt_name=
 <body>
     <div class="app-header">
         <div class="header-brand">
-            <h1>🏢 {apt_name} 입찰 모니터링</h1>
-            <span class="kakao-badge">카톡 공유용</span>
+            <h1>🏢 {apt_name} 입찰·수의계약</h1>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <button onclick="location.reload()" style="background:#2563EB; color:white; border:1px solid #60A5FA; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; font-weight:bold;">🔄 새로고침</button>
+                <span class="kakao-badge">클라우드 자동감시</span>
+            </div>
         </div>
-        <div class="header-desc">K-apt 실시간 공시 데이터 | {now_str} 기준</div>
+        <div class="header-desc" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+            <span>🟢 K-apt 감시 | {now_str}</span>
+            <a href="https://github.com/jjkim2700-alt/kapt-riverpark/actions/workflows/update.yml" target="_blank" style="color:#93C5FD; text-decoration:underline; font-size:11px;">⚡ 즉시 클라우드 갱신</a>
+        </div>
     </div>
 
     <!-- 필터 바 -->

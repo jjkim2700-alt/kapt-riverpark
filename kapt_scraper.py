@@ -37,15 +37,21 @@ class KaptScraper:
         if self.csrf_token:
             return self.csrf_token
 
-        url = 'https://www.k-apt.go.kr/bid/bidList.do?type=1'
-        req = urllib.request.Request(url, headers=self.headers)
-        with self.opener.open(req, timeout=10) as res:
-            html = res.read().decode('utf-8', errors='ignore')
+        for attempt in range(3):
+            try:
+                url = 'https://www.k-apt.go.kr/bid/bidList.do?type=1'
+                req = urllib.request.Request(url, headers=self.headers)
+                with self.opener.open(req, timeout=15) as res:
+                    html = res.read().decode('utf-8', errors='ignore')
 
-        m = re.search(r'name="_csrf"\s+content="([^"]+)"', html)
-        if m:
-            self.csrf_token = m.group(1)
-        return self.csrf_token
+                m = re.search(r'name="_csrf"\s+content="([^"]+)"', html)
+                if m:
+                    self.csrf_token = m.group(1)
+                    return self.csrf_token
+            except Exception as e:
+                print(f"[경고] CSRF 토큰 획득 시도 {attempt+1}/3 오류: {e}")
+                time.sleep(1)
+        return self.csrf_token or ""
 
     def fetch_bids(self, apt_name="리버파크자이", days=365):
         """
@@ -73,56 +79,61 @@ class KaptScraper:
                 f"&dateStart={start_date}&dateEnd={end_date}&dateArea=4"
                 f"&pageNo=1&type={t_code}"
             )
-            try:
-                req = urllib.request.Request(url, headers=self.headers)
-                with self.opener.open(req, timeout=12) as res:
-                    html = res.read().decode('utf-8', errors='ignore')
+            for attempt in range(3):
+                try:
+                    req = urllib.request.Request(url, headers=self.headers)
+                    with self.opener.open(req, timeout=20) as res:
+                        html = res.read().decode('utf-8', errors='ignore')
 
-                soup = BeautifulSoup(html, 'html.parser')
-                tbody = soup.find('tbody')
-                if not tbody:
-                    continue
+                    soup = BeautifulSoup(html, 'html.parser')
+                    tbody = soup.find('tbody')
+                    if not tbody:
+                        break
 
-                for tr in tbody.find_all('tr'):
-                    tds = tr.find_all('td')
-                    if len(tds) < 8:
-                        continue
+                    found_items = []
+                    for tr in tbody.find_all('tr'):
+                        tds = tr.find_all('td')
+                        if len(tds) < 8:
+                            continue
 
-                    # goView 자바스크립트 함수에서 bidNum 추출
-                    onclick = ""
-                    for td in tds:
-                        oc = td.get('onclick', '')
-                        if 'goView' in oc:
-                            onclick = oc
-                            break
-                    
-                    bid_num = ""
-                    m = re.search(r'goView\([\'"]([^\'"]+)[\'"]\)', onclick)
-                    if m:
-                        bid_num = m.group(1)
+                        # goView 자바스크립트 함수에서 bidNum 추출
+                        onclick = ""
+                        for td in tds:
+                            oc = td.get('onclick', '')
+                            if 'goView' in oc:
+                                onclick = oc
+                                break
+                        
+                        bid_num = ""
+                        m = re.search(r'goView\([\'"]([^\'"]+)[\'"]\)', onclick)
+                        if m:
+                            bid_num = m.group(1)
 
-                    raw_title = tds[3].get_text(separator=' ', strip=True)
-                    # 연속 공백 정리
-                    clean_title = re.sub(r'\s+', ' ', raw_title)
+                        raw_title = tds[3].get_text(separator=' ', strip=True)
+                        # 연속 공백 정리
+                        clean_title = re.sub(r'\s+', ' ', raw_title)
 
-                    bid_item = {
-                        "seq": tds[0].get_text(strip=True),
-                        "type_code": t_code,
-                        "type_name": t_name,
-                        "method": tds[2].get_text(strip=True),
-                        "title": clean_title,
-                        "limit_date": tds[4].get_text(strip=True),
-                        "status": tds[5].get_text(strip=True),
-                        "amount": tds[6].get_text(strip=True),
-                        "apt": tds[7].get_text(strip=True),
-                        "date": tds[8].get_text(strip=True),
-                        "bid_num": bid_num,
-                        "detail": None
-                    }
-                    all_bids.append(bid_item)
-
-            except Exception as e:
-                print(f"[경고] {t_name} 수집 중 오류: {e}")
+                        bid_item = {
+                            "seq": tds[0].get_text(strip=True),
+                            "type_code": t_code,
+                            "type_name": t_name,
+                            "method": tds[2].get_text(strip=True),
+                            "title": clean_title,
+                            "limit_date": tds[4].get_text(strip=True),
+                            "status": tds[5].get_text(strip=True),
+                            "amount": tds[6].get_text(strip=True),
+                            "apt": tds[7].get_text(strip=True),
+                            "date": tds[8].get_text(strip=True),
+                            "bid_num": bid_num,
+                            "detail": None
+                        }
+                        found_items.append(bid_item)
+                    all_bids.extend(found_items)
+                    break
+                except Exception as e:
+                    print(f"[경고] {t_name} 수집 시도 {attempt+1}/3 오류: {e}")
+                    if attempt < 2:
+                        time.sleep(2)
 
         return all_bids
 
