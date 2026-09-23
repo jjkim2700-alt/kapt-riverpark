@@ -285,23 +285,23 @@
             </div>
         </div>
         <div class="header-desc" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
-            <span>🟢 K-apt 감시 | 2026-09-23 13:08:01 (한국시간)</span>
+            <span>🟢 K-apt 감시 | 2026-09-23 23:15:28 (한국시간)</span>
             <a href="https://github.com/jjkim2700-alt/kapt-riverpark/actions/workflows/update.yml" target="_blank" style="color:#93C5FD; text-decoration:underline; font-size:11px;">⚡ 즉시 클라우드 갱신</a>
         </div>
     </div>
 
     <!-- 필터 바 -->
     <div class="share-bar">
-        <div class="btn-filter active" onclick="applyFilter('ALL', this)">전체 (37)</div>
+        <div class="btn-filter active" onclick="applyFilter('ALL', this)">전체 (38)</div>
         <div class="btn-filter" onclick="applyFilter('PUBLIC', this)">공개입찰 (9)</div>
-        <div class="btn-filter" onclick="applyFilter('PRIVATE', this)">수의계약 (28)</div>
-        <div class="btn-filter" onclick="applyFilter('WARN', this)">감사주의 (27)</div>
+        <div class="btn-filter" onclick="applyFilter('PRIVATE', this)">수의계약 (29)</div>
+        <div class="btn-filter" onclick="applyFilter('WARN', this)">감사주의 (31)</div>
     </div>
 
     <!-- 통계 카드 -->
     <div class="stats-grid">
         <div class="stat-box">
-            <div class="stat-box-num">37</div>
+            <div class="stat-box-num">38</div>
             <div class="stat-box-lbl">전체</div>
         </div>
         <div class="stat-box blue">
@@ -309,11 +309,11 @@
             <div class="stat-box-lbl">공개입찰</div>
         </div>
         <div class="stat-box purple">
-            <div class="stat-box-num">28</div>
+            <div class="stat-box-num">29</div>
             <div class="stat-box-lbl">수의계약</div>
         </div>
         <div class="stat-box red">
-            <div class="stat-box-num">27</div>
+            <div class="stat-box-num">31</div>
             <div class="stat-box-lbl">감사주의</div>
         </div>
     </div>
@@ -447,13 +447,13 @@
             </div>
         </div>
         
-        <div class="bid-card filter-item" data-category="PRIVATE" data-status="수의계약" data-risk="NORMAL">
+        <div class="bid-card filter-item" data-category="PRIVATE" data-status="수의계약" data-risk="WARNING">
             <div class="card-header" onclick="toggleCard(2)">
                 <div class="header-top">
                     <div class="badges-row">
                         <span class="badge badge-purple">수의계약</span>
                         <span class="badge badge-type">수의계약</span>
-                        
+                        <span class="badge badge-warning">⚠️ 주의 필요</span>
                     </div>
                     <div class="amount-tag">5,000,000</div>
                 </div>
@@ -462,7 +462,7 @@
             </div>
 
             <div class="card-body" id="card-body-2">
-                
+                <div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> 주택관리업자 및 사업자 선정지침 별표 2 / 대표회의 의결</div>
                 <div class="meta-grid">
                     <div><strong>📅 계약/등록일:</strong> 2026-07-24</div>
                     <div><strong>⏰ 마감/계약기간:</strong> 2026-07-29~2026-07-30</div>
@@ -471,8 +471,42 @@
                 </div>
 
                 
+            <div class="meta-row">
                 
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 장기수선계획 공사 수의계약 - 절차 검증 필요</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">🏢 계약 체결 업체 상세</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="winner-row">
+                    <td>1</td>
+                    <td><strong>지오조경(주)</strong></td>
+                    <td>5,000,000원 (부가세 별도)원</td>
+                    <td>2026-07-24</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -665,13 +699,13 @@
             </div>
         </div>
         
-        <div class="bid-card filter-item" data-category="PUBLIC" data-status="낙찰" data-risk="NORMAL">
+        <div class="bid-card filter-item" data-category="PUBLIC" data-status="낙찰" data-risk="CAUTION">
             <div class="card-header" onclick="toggleCard(6)">
                 <div class="header-top">
                     <div class="badges-row">
                         <span class="badge badge-blue">낙찰</span>
                         <span class="badge badge-type">낙찰결과</span>
-                        
+                        <span class="badge badge-caution">🔍 검토 요망</span>
                     </div>
                     <div class="amount-tag">63,600,000</div>
                 </div>
@@ -689,8 +723,58 @@
                 </div>
 
                 
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>주식회사 일택</strong></span>
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 3개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>오티스서비스엑스퍼트(유)</strong></td>
+                    <td>78,864,000원</td>
+                    <td>2026-06-30</td>
+                    <td>-</td>
+                </tr>
                 
+                <tr class="winner-row">
+                    <td>2</td>
+                    <td><strong>자이엘리베이터주식회사</strong></td>
+                    <td>63,600,000원</td>
+                    <td>2026-06-30</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>현대엘리베이터(주)대전지사</strong></td>
+                    <td>184,440,000원</td>
+                    <td>2026-06-30</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -898,7 +982,7 @@
             </div>
 
             <div class="card-body" id="card-body-10">
-                
+                <div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> 주택관리업자 및 사업자 선정지침 별표 2 / 대표회의 의결</div>
                 <div class="meta-grid">
                     <div><strong>📅 계약/등록일:</strong> 2026-05-15</div>
                     <div><strong>⏰ 마감/계약기간:</strong> 2026-05-01~2027-04-30</div>
@@ -907,8 +991,42 @@
                 </div>
 
                 
+            <div class="meta-row">
+                
+                <span>📞 충북 청주시 흥덕구 옥산면 오송가락로 1056</span>
+                <span>🏘️ 0437162321개동 (18세대)</span>
+            </div>
+            
                 <div class="risk-tags-box"><span class="tag-item">📌 공고기간 미달(-14일, 법정10일)</span><span class="tag-item">📌 1천만원 이상 수의계약(36,930,000원)</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">🏢 계약 체결 업체 상세</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="winner-row">
+                    <td>1</td>
+                    <td><strong>(주) 뿌리나무병원</strong></td>
+                    <td>36,930,000원 (부가세 별도)원</td>
+                    <td>2026-05-15</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -1506,7 +1624,7 @@
             </div>
 
             <div class="card-body" id="card-body-20">
-                
+                <div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> 주택관리업자 및 사업자 선정지침 별표 2 / 대표회의 의결</div>
                 <div class="meta-grid">
                     <div><strong>📅 계약/등록일:</strong> 2026-01-30</div>
                     <div><strong>⏰ 마감/계약기간:</strong> 2026-02-01~2026-04-30</div>
@@ -1515,8 +1633,42 @@
                 </div>
 
                 
+            <div class="meta-row">
+                
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
                 <div class="risk-tags-box"><span class="tag-item">📌 공고기간 미달(2일, 법정10일)</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">🏢 계약 체결 업체 상세</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="winner-row">
+                    <td>1</td>
+                    <td><strong>(주)일건</strong></td>
+                    <td>2,600,000원 (부가세 별도)원</td>
+                    <td>2026-01-30</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -1661,7 +1813,7 @@
             </div>
 
             <div class="card-body" id="card-body-23">
-                
+                <div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> 주택관리업자 및 사업자 선정지침 별표 2 / 대표회의 의결</div>
                 <div class="meta-grid">
                     <div><strong>📅 계약/등록일:</strong> 2025-12-19</div>
                     <div><strong>⏰ 마감/계약기간:</strong> 2025-12-19~2026-12-31</div>
@@ -1670,8 +1822,42 @@
                 </div>
 
                 
+            <div class="meta-row">
+                
+                <span>📞 0437162320</span>
+                <span>🏘️ 18개동 (2529세대)</span>
+            </div>
+            
                 <div class="risk-tags-box"><span class="tag-item">📌 공고기간 미달(0일, 법정10일)</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">🏢 계약 체결 업체 상세</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="winner-row">
+                    <td>1</td>
+                    <td><strong>(주) 한국건설품질안전진단</strong></td>
+                    <td>2,500,000원 (부가세 별도)원</td>
+                    <td>2025-12-19</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -1943,13 +2129,13 @@
             </div>
         </div>
         
-        <div class="bid-card filter-item" data-category="PUBLIC" data-status="낙찰" data-risk="NORMAL">
+        <div class="bid-card filter-item" data-category="PUBLIC" data-status="낙찰" data-risk="WARNING">
             <div class="card-header" onclick="toggleCard(28)">
                 <div class="header-top">
                     <div class="badges-row">
                         <span class="badge badge-blue">낙찰</span>
                         <span class="badge badge-type">낙찰결과</span>
-                        
+                        <span class="badge badge-warning">⚠️ 주의 필요</span>
                     </div>
                     <div class="amount-tag">2,893,000,000</div>
                 </div>
@@ -1967,8 +2153,90 @@
                 </div>
 
                 
+            <div class="meta-row">
+                <span>🏢 관리업자: <strong>리버파크자이 아파트
+						
+							
+							
+						
+
+						
+						
+							(입대의)</strong></span>
+                <span>📞 0437162321</span>
+                <span>🏘️ 2529개동 (세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span><span class="tag-item">📌 사전 단독투찰 패턴(들러리 의심)</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">📊 응찰 업체 투찰 내역 (총 6개사)</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="">
+                    <td>1</td>
+                    <td><strong>(주)정민씨앤씨</strong></td>
+                    <td>**********원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
                 
+                <tr class="">
+                    <td>2</td>
+                    <td><strong>(주)효덕산업</strong></td>
+                    <td>3,219,500,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3</td>
+                    <td><strong>대표건설(주)</strong></td>
+                    <td>3,068,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="">
+                    <td>4</td>
+                    <td><strong>색채산업개발(주)</strong></td>
+                    <td>3,519,700,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="winner-row">
+                    <td>5</td>
+                    <td><strong>엘케이개발(주)</strong></td>
+                    <td>2,893,000,000원</td>
+                    <td>2025-11-28</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                <tr class="">
+                    <td>6</td>
+                    <td><strong>케이건설 주식회사</strong></td>
+                    <td>3,685,000,000원</td>
+                    <td>2025-12-01</td>
+                    <td>-</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -2282,7 +2550,7 @@
             </div>
 
             <div class="card-body" id="card-body-34">
-                
+                <div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> 주택관리업자 및 사업자 선정지침 별표 2 / 대표회의 의결</div>
                 <div class="meta-grid">
                     <div><strong>📅 계약/등록일:</strong> 2025-10-17</div>
                     <div><strong>⏰ 마감/계약기간:</strong> 2025-10-17~2025-10-18</div>
@@ -2291,8 +2559,42 @@
                 </div>
 
                 
+            <div class="meta-row">
+                
+                <span>📞 충북 청주시 흥덕구 옥산면 오송가락로 1056</span>
+                <span>🏘️ 0437162321개동 (18세대)</span>
+            </div>
+            
                 <div class="risk-tags-box"><span class="tag-item">📌 공고기간 미달(0일, 법정10일)</span></div>
                 
+            <div class="participants-box">
+                <div class="participants-title">🏢 계약 체결 업체 상세</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="winner-row">
+                    <td>1</td>
+                    <td><strong>홍실침구</strong></td>
+                    <td>2,000,000원 (부가세 별도)원</td>
+                    <td>2025-10-17</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
@@ -2415,6 +2717,69 @@
             
                 <div class="risk-tags-box"><span class="tag-item">📌 제한요건 감지(제한경쟁)</span></div>
                 
+            </div>
+        </div>
+        
+        <div class="bid-card filter-item" data-category="PRIVATE" data-status="수의계약" data-risk="WARNING">
+            <div class="card-header" onclick="toggleCard(37)">
+                <div class="header-top">
+                    <div class="badges-row">
+                        <span class="badge badge-purple">수의계약</span>
+                        <span class="badge badge-type">수의계약</span>
+                        <span class="badge badge-warning">⚠️ 주의 필요</span>
+                    </div>
+                    <div class="amount-tag">2,304,000</div>
+                </div>
+                <div class="card-title">[충북] 단지 홈네트워크 고정IP 계약</div>
+                <div class="card-hint">계약업체: (주) LG유플러스 ▼</div>
+            </div>
+
+            <div class="card-body" id="card-body-37">
+                <div style='margin-bottom:8px; font-size:12px; color:#475569;'><strong>📋 수의계약 사유:</strong> 주택관리업자 및 사업자 선정지침 별표 2 / 대표회의 의결</div>
+                <div class="meta-grid">
+                    <div><strong>📅 계약/등록일:</strong> 2025-09-18</div>
+                    <div><strong>⏰ 마감/계약기간:</strong> 2025-09-18~2028-09-17</div>
+                    <div><strong>⚖️ 계약방식:</strong> 수의계약</div>
+                    <div><strong>🏢 발주단지:</strong> 리버파크자이 아파트</div>
+                </div>
+
+                
+            <div class="meta-row">
+                
+                <span>📞 충북 청주시 흥덕구 옥산면 오송가락로 1056</span>
+                <span>🏘️ 0437162321개동 (18세대)</span>
+            </div>
+            
+                <div class="risk-tags-box"><span class="tag-item">📌 공고기간 미달(0일, 법정10일)</span></div>
+                
+            <div class="participants-box">
+                <div class="participants-title">🏢 계약 체결 업체 상세</div>
+                <div class="table-responsive">
+                    <table class="sub-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>회사명</th>
+                                <th>금액</th>
+                                <th>일자</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                <tr class="winner-row">
+                    <td>1</td>
+                    <td><strong>(주) LG유플러스</strong></td>
+                    <td>2,304,000원 (부가세 별도)원</td>
+                    <td>2025-09-18</td>
+                    <td>🏆 계약/낙찰</td>
+                </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             </div>
         </div>
         
